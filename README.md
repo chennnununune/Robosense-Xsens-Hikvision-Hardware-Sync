@@ -35,10 +35,12 @@ The Robosense Helios-32 supports SyncOut output, allowing the LiDAR to send a pu
 
 Note that the time in the GPRMC signal sent from the STM32 to the LiDAR is not the IMU time, but rather a time that starts increasing from a pre-defined time $T_0$. Therefore, timestamp handling is also required in the driver.
 
-According to the [official manual](https://base.movella.com/s/article/Synchronization-with-the-MTi), the IMU starts sampling 0.69 ms after receiving the StartSampling signal and generates the first accelerometer/gyroscope data 3.19 ms after receiving the StartSampling signal. The first SyncOut signal is send 1,000.69 ms after receiving the StartSampling signal. Therefore, the stm32 receives the first PPS signal 1,000.69 ms - 3.19 ms = 997.5 ms after the IMU's first data. At this point, the stm32 sends the GPRMC signal to the Lidar and sets the Lidar's hardware time to $T_0$. Therefore, in the Lidar driver:
+According to the [official manual](https://base.movella.com/s/article/Synchronization-with-the-MTi), the IMU starts sampling 0.69 ms after receiving the StartSampling signal and generates the first accelerometer/gyroscope data 3.19 ms after receiving the StartSampling signal. The first SyncOut signal is send 1,000.69 ms after receiving the StartSampling signal. Therefore, the stm32 receives the first PPS signal 1,000.69 ms - 3.19 ms = 997.5 ms after the IMU's first data. At this point, the stm32 sends the GPRMC signal to the Lidar and sets the Lidar's hardware time to $T_0$ . Therefore, in the Lidar driver:
+
 $$
 t_{LidarSync} = t_{Lidar} - T_0 + 997.5ms + t_{IMU0}
 $$
+
 Where $t_{LidarSync}$ is the time of the LiDAR frame in the IMU timeline, $t_{Lidar}$ is the hardware time of the LiDAR frame, $t_{IMU0}$ is the timestamp of the first IMU data received by the computer.
 
 To prevent LiDAR frame splitting within the camera's field of view, set the LiDAR's frame-splitting angle to 180°. If we fix the camera's exposure time to 10,000 μs (which can be adjusted as needed), the LiDAR will rotate 36° during this exposure period. To align the LiDAR with the camera as closely as possible, you can set the LiDAR Pulse Start Angle to 342°, so that the LiDAR is positioned at 0° when the camera exposure is halfway through. Since the camera finishes exposure and returns the image when the LiDAR reaches 18°, but the LiDAR frame is only completed after rotating to 180°, the camera typically receives the complete data 0 to 100 ms earlier than the LiDAR. Therefore, in the camera driver, after receiving an image frame, the system waits for the next LiDAR frame and assigns the LiDAR frame's timestamp to the image message.

@@ -35,11 +35,13 @@ Robosense Helios-32支持SyncOut输出，允许激光雷达在旋转到特定角
 
 注意到stm32向激光雷达发出的GPRMC信号中的时间不是IMU的时间，而是一个从约定时间$T_0$ 开始递增的时间，因此还需要在驱动中处理时间戳。
 
-根据[官方手册](https://base.movella.com/s/article/Synchronization-with-the-MTi)，IMU在接收到StartSampling信号的0.69ms后开始采样，并在接收到StartSampling信号的3.19ms后产生第一个加速度计/陀螺仪数据，在接收到StartSampling信号的1000.69ms后发出第一个SyncOut信号。因此，stm32接收到第一个PPS信号的时间实际上是IMU的第一个数据的1000.69ms - 3.19ms = 997.5ms后。此时stm32向激光雷达发出GPRMC信号并将激光雷达的硬件时间设置为$T_0$ 。因此在激光雷达驱动中：
+根据[官方手册](https://base.movella.com/s/article/Synchronization-with-the-MTi)，IMU在接收到StartSampling信号的0.69ms后开始采样，并在接收到StartSampling信号的3.19ms后产生第一个加速度计/陀螺仪数据，在接收到StartSampling信号的1000.69ms后发出第一个SyncOut信号。因此，stm32接收到第一个PPS信号的时间实际上是IMU的第一个数据的1000.69ms - 3.19ms = 997.5ms后。此时stm32向激光雷达发出GPRMC信号并将激光雷达的硬件时间设置为$T_0$。因此在激光雷达驱动中：
+
 $$
 t_{LidarSync} = t_{Lidar} - T_0 + 997.5ms + t_{IMU0}
 $$
-其中$t_{LidarSync}$ 为激光雷达帧在IMU时间轴下的时间，$t_{Lidar}$ 为激光雷达帧的硬件时间，$t_{IMU0}$ 为电脑接收到第一个IMU数据的时间戳。
+
+其中$t_{LidarSync}$为激光雷达帧在IMU时间轴下的时间，$t_{Lidar}$为激光雷达帧的硬件时间，$t_{IMU0}$为电脑接收到第一个IMU数据的时间戳。
 
 为了使激光雷达驱动不在相机视角范围内分帧，将激光雷达分帧的角度设置为180°。如果我们将相机的曝光时间固定为10000μS（可以根据需要自行更改），则在曝光时间内激光雷达旋转36°。为了使激光雷达与相机尽可能对齐，可以将激光雷达 Pulse Start Angle设置为342°，此时相机曝光到一半时激光雷达正好扫描正前方。由于相机在雷达旋转至18°时就结束曝光并传回图片，而激光雷达要在旋转到180°后再生成完整的激光雷达帧，因此在通讯良好的情况下，相机驱动总是先于激光雷达驱动0到100ms接收到完整的数据。因此在相机驱动中，每收到一帧图片，就等待下一个接收到的激光雷达帧，并给图片消息赋予激光雷达帧的时间戳。
 
