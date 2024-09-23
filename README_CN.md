@@ -33,7 +33,7 @@ Robosense Helios-32支持SyncOut输出，允许激光雷达在旋转到特定角
 <img src="./pics/sync_time.jpeg"  width="100.0%" />
 </div>
 
-注意到stm32向激光雷达发出的GPRMC信号中的时间不是IMU的时间，而是一个从约定时间$T_0$ 开始递增的时间，因此还需要在驱动中处理时间戳。
+注意到stm32向激光雷达发出的GPRMC信号中的时间不是IMU的时间，而是一个从约定时间T0 开始递增的时间，因此还需要在驱动中处理时间戳。
 
 根据[官方手册](https://base.movella.com/s/article/Synchronization-with-the-MTi)，IMU在接收到StartSampling信号的0.69ms后开始采样，并在接收到StartSampling信号的3.19ms后产生第一个加速度计/陀螺仪数据，在接收到StartSampling信号的1000.69ms后发出第一个SyncOut信号。因此，stm32接收到第一个PPS信号的时间实际上是IMU的第一个数据的1000.69ms - 3.19ms = 997.5ms后。此时stm32向激光雷达发出GPRMC信号并将激光雷达的硬件时间设置为T0。因此在激光雷达驱动中：
 
