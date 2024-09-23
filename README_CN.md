@@ -24,7 +24,7 @@
 
 Xsens mti-300的[StartSampling](https://base.movella.com/s/article/ClockSync-and-StartSampling)功能允许IMU在接收到StartSampling信号之后再开始采样，而[SyncOut](https://base.movella.com/s/article/Synchronization-with-the-MTi)功能允许IMU输出同步脉冲。将IMU SyncOut功能的skip factor为399，使IMU每发出400个数据就发出一个同步脉冲。在stm32上电后，stm32会向IMU发出StartSampling信号。IMU接收到StartSampling信号后开始采样，并发出1Hz的PPS信号。
 
-Robosense Helios-32支持GPS+PPS时间同步方式，接收1Hz的PPS信号与1Hz的GPRMC信号，并根据GPRMC信号中的时间设置激光雷达的硬件时间。这里我们使用stm32来伪造GPRMC信号：在stm32每次收到PPS信号时，向雷达发送一个时间增加一秒的GPRMC信号，其中stm32第一次收到PPS信号时发出的GPRMC信号中的时间为一个约定时间$T_0$ 。
+Robosense Helios-32支持GPS+PPS时间同步方式，接收1Hz的PPS信号与1Hz的GPRMC信号，并根据GPRMC信号中的时间设置激光雷达的硬件时间。这里我们使用stm32来伪造GPRMC信号：在stm32每次收到PPS信号时，向雷达发送一个时间增加一秒的GPRMC信号，其中stm32第一次收到PPS信号时发出的GPRMC信号中的时间为一个约定时间T0 。
 
 Robosense Helios-32支持SyncOut输出，允许激光雷达在旋转到特定角度时输出一个脉冲。Hikvision MV-CA013-21UC允许硬件触发，在每次接收到触发信号后开始曝光。因此只要设置好激光雷达 SyncOut输出的角度，就能保证激光雷达与相机在相机的视角范围内同时采样。
 
@@ -35,13 +35,13 @@ Robosense Helios-32支持SyncOut输出，允许激光雷达在旋转到特定角
 
 注意到stm32向激光雷达发出的GPRMC信号中的时间不是IMU的时间，而是一个从约定时间$T_0$ 开始递增的时间，因此还需要在驱动中处理时间戳。
 
-根据[官方手册](https://base.movella.com/s/article/Synchronization-with-the-MTi)，IMU在接收到StartSampling信号的0.69ms后开始采样，并在接收到StartSampling信号的3.19ms后产生第一个加速度计/陀螺仪数据，在接收到StartSampling信号的1000.69ms后发出第一个SyncOut信号。因此，stm32接收到第一个PPS信号的时间实际上是IMU的第一个数据的1000.69ms - 3.19ms = 997.5ms后。此时stm32向激光雷达发出GPRMC信号并将激光雷达的硬件时间设置为$T_0$。因此在激光雷达驱动中：
+根据[官方手册](https://base.movella.com/s/article/Synchronization-with-the-MTi)，IMU在接收到StartSampling信号的0.69ms后开始采样，并在接收到StartSampling信号的3.19ms后产生第一个加速度计/陀螺仪数据，在接收到StartSampling信号的1000.69ms后发出第一个SyncOut信号。因此，stm32接收到第一个PPS信号的时间实际上是IMU的第一个数据的1000.69ms - 3.19ms = 997.5ms后。此时stm32向激光雷达发出GPRMC信号并将激光雷达的硬件时间设置为T0。因此在激光雷达驱动中：
 
 $$
 t_{LidarSync} = t_{Lidar} - T_0 + 997.5ms + t_{IMU0}
 $$
 
-其中$t_{LidarSync}$为激光雷达帧在IMU时间轴下的时间，$t_{Lidar}$为激光雷达帧的硬件时间，$t_{IMU0}$为电脑接收到第一个IMU数据的时间戳。
+其中t_LidarSync为激光雷达帧在IMU时间轴下的时间，t_Lidar为激光雷达帧的硬件时间，t_IMU0为电脑接收到第一个IMU数据的时间戳。
 
 为了使激光雷达驱动不在相机视角范围内分帧，将激光雷达分帧的角度设置为180°。如果我们将相机的曝光时间固定为10000μS（可以根据需要自行更改），则在曝光时间内激光雷达旋转36°。为了使激光雷达与相机尽可能对齐，可以将激光雷达 Pulse Start Angle设置为342°，此时相机曝光到一半时激光雷达正好扫描正前方。由于相机在雷达旋转至18°时就结束曝光并传回图片，而激光雷达要在旋转到180°后再生成完整的激光雷达帧，因此在通讯良好的情况下，相机驱动总是先于激光雷达驱动0到100ms接收到完整的数据。因此在相机驱动中，每收到一帧图片，就等待下一个接收到的激光雷达帧，并给图片消息赋予激光雷达帧的时间戳。
 
