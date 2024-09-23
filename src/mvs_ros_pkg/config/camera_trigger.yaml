@@ -1,0 +1,25 @@
+%YAML:1.0
+
+#--------------------------------------------------------------------------------------------
+# Camera Parameters. Adjust them!
+#--------------------------------------------------------------------------------------------
+
+SerialNumber: "00DA3111817"
+CameraName: "MV-CA013-21UC"
+TopicName: "camera/image"
+
+ExposureAuto: 0 # 0 stands for Off, 1 stands for Once, 2 stands for Continues
+ExposureTime: 10000 # min: 15  max: 9999500
+
+resize_divide: 0.5
+
+GainAuto: 2 # 0 stands for Off, 1 stands for Once, 2 stands for Continues
+Gain: 15 # min: 0.000000   max: 15.006200
+
+GammaSelector: 1 # 1 stands for user, 2 stands for sRGB
+Gamma: 0.7 # min: 0.000000   max: 4.000000
+
+ReverseX: 1 # 0 stands for false, 1 stands for true
+ReverseY: 1 # 0 stands for false, 1 stands for true
+
+Binning: 2 # 1, 2 or 4 Number of pixels to combine together
