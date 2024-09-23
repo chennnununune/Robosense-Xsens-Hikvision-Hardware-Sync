@@ -21,6 +21,7 @@ This project is based on [YangTiankai's project](https://github.com/YangTiankai)
 <div align="center">
 <img src="./pics/sync.png"  width="100.0%" />
 </div>
+
 The [StartSampling](https://base.movella.com/s/article/ClockSync-and-StartSampling) function of the Xsens MTi-300 allows the IMU to start sampling only after receiving the StartSampling signal. The [SyncOut](https://base.movella.com/s/article/Synchronization-with-the-MTi) function enables the IMU to output synchronization pulses. By setting the IMU SyncOut function's skip factor to 399, the IMU will output one synchronization pulse for every 400 data samples. Once the STM32 is powered on, it sends a StartSampling signal to the IMU. After receiving the StartSampling signal, the IMU begins sampling and outputs a 1Hz PPS (Pulse Per Second) signal.
 
 The Robosense Helios-32 supports GPS+PPS time synchronization by receiving a 1Hz PPS signal and a 1Hz GPRMC signal. It sets the LiDAR hardware time based on the time information from the GPRMC signal. In this setup, we use an STM32 to simulate the GPRMC signal: each time the STM32 receives a PPS signal, it sends a GPRMC signal to the LiDAR with the time incremented by one second. The first GPRMC signal sent by the STM32 when it receives the first PPS signal will contain a pre-defined time $T_0$.
@@ -31,6 +32,7 @@ The Robosense Helios-32 supports SyncOut output, allowing the LiDAR to send a pu
 <div align="center">
 <img src="./pics/sync_time.jpeg"  width="100.0%" />
 </div>
+
 Note that the time in the GPRMC signal sent from the STM32 to the LiDAR is not the IMU time, but rather a time that starts increasing from a pre-defined time $T_0$. Therefore, timestamp handling is also required in the driver.
 
 According to the [official manual](https://base.movella.com/s/article/Synchronization-with-the-MTi), the IMU starts sampling 0.69 ms after receiving the StartSampling signal and generates the first accelerometer/gyroscope data 3.19 ms after receiving the StartSampling signal. The first SyncOut signal is send 1,000.69 ms after receiving the StartSampling signal. Therefore, the stm32 receives the first PPS signal 1,000.69 ms - 3.19 ms = 997.5 ms after the IMU's first data. At this point, the stm32 sends the GPRMC signal to the Lidar and sets the Lidar's hardware time to $T_0$. Therefore, in the Lidar driver:
@@ -46,12 +48,14 @@ To prevent LiDAR frame splitting within the camera's field of view, set the LiDA
 <div align="center">
 <img src="./pics/sync_board_real.png"  width="50.0%" />
 </div>
+
 This project designed a PCB to facilitate the electrical connection between the various sensors and the STM32 minimum system board. The hardware sync interfaces for each sensor are as follows:
 
 #### IMU Interface
 <div align="center">
 <img src="./pics/IMU_hardware1.png"  width="40.0%" />
 </div>
+
 <div align="center">
 <img src="./pics/IMU_hardware.png"  width="80.0%" />
 </div>
@@ -60,6 +64,7 @@ This project designed a PCB to facilitate the electrical connection between the 
 <div align="center">
 <img src="./pics/Lidar_hardware1.png"  width="40.0%" />
 </div>
+
 <div align="center">
 <img src="./pics/Lidar_hardware.png"  width="40.0%" />
 </div>
@@ -73,6 +78,7 @@ This project designed a PCB to facilitate the electrical connection between the 
 <div align="center">
 <img src="./pics/stm32.png"  width="80.0%" />
 </div>
+
 <div align="center">
 <img src="./pics/sync_board.png"  width="100.0%" />
 </div>
@@ -89,6 +95,7 @@ Connect the LiDAR's SYNC_OUT1 to the Camera's GPIO.
 <div align="center">
 <img src="./pics/pcb.png"  width="100.0%" />
 </div>
+
 | Component | Pics | Num |
 | :------------: | :------------: | :------------: |
 |SH1.0-2P|<img src="./pics/sh2p.png" width=20%  />| 1 |
@@ -121,6 +128,7 @@ Connect the LiDAR's SYNC_OUT1 to the Camera's GPIO.
 <div align="center">
 <img src="./pics/Camera_hardware.png"  width="80.0%" />
 </div>
+
 | Hikvision Trigger Cable | SH1.0-2P Connector |
 | :------------: | :------------: |
 | GND | Pin1 |
@@ -134,11 +142,13 @@ SH1.0-6P cable 10cm
 <div align="center">
 <img src="./pics/handhold_real.jpeg"  width="50.0%" />
 </div>
+
 <div align="center">
 <img src="./pics/handhold1.png"  width="80.0%" />
 </div>
 
 Lidar -> IMU Translation
+
 $$
 \left[
  \begin{matrix}
@@ -151,6 +161,7 @@ $$
 $$
 
 Lidar -> Camera Translation
+
 $$
 \left[
  \begin{matrix}
@@ -177,22 +188,26 @@ $$
 <div align="center">
 <img src="./pics/IMU_settings1.png"  width="80.0%" />
 </div>
+
 Enable the Sample Time Fine and Sample Time Coarse options.
 
 <div align="center">
 <img src="./pics/IMU_settings2.png"  width="80.0%" />
 </div>
+
 Add the Start Sampling function in Synchronization, and set the Polarity to Rising Edge.
 
 <div align="center">
 <img src="./pics/IMU_settings3.png"  width="80.0%" />
 </div>
+
 Add the Sync Out function in Synchronization, set the Skip Factor to 399, and the Pulse Width to 100,000 µs.
 
 #### Lidar Driver
 <div align="center">
 <img src="./pics/Lidar_settings1.png"  width="80.0%" />
 </div>
+
 Turn on Pulse Trigger Switch in Robosense Driver, and set the Pulse Start Angle to 342°, set the Pulse Width to 10,000,000 ns.
 #### Camera Driver
 

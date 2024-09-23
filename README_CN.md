@@ -21,6 +21,7 @@
 <div align="center">
 <img src="./pics/sync.png"  width="100.0%" />
 </div>
+
 Xsens mti-300的[StartSampling](https://base.movella.com/s/article/ClockSync-and-StartSampling)功能允许IMU在接收到StartSampling信号之后再开始采样，而[SyncOut](https://base.movella.com/s/article/Synchronization-with-the-MTi)功能允许IMU输出同步脉冲。将IMU SyncOut功能的skip factor为399，使IMU每发出400个数据就发出一个同步脉冲。在stm32上电后，stm32会向IMU发出StartSampling信号。IMU接收到StartSampling信号后开始采样，并发出1Hz的PPS信号。
 
 Robosense Helios-32支持GPS+PPS时间同步方式，接收1Hz的PPS信号与1Hz的GPRMC信号，并根据GPRMC信号中的时间设置激光雷达的硬件时间。这里我们使用stm32来伪造GPRMC信号：在stm32每次收到PPS信号时，向雷达发送一个时间增加一秒的GPRMC信号，其中stm32第一次收到PPS信号时发出的GPRMC信号中的时间为一个约定时间$T_0$ 。
@@ -31,6 +32,7 @@ Robosense Helios-32支持SyncOut输出，允许激光雷达在旋转到特定角
 <div align="center">
 <img src="./pics/sync_time.jpeg"  width="100.0%" />
 </div>
+
 注意到stm32向激光雷达发出的GPRMC信号中的时间不是IMU的时间，而是一个从约定时间$T_0$ 开始递增的时间，因此还需要在驱动中处理时间戳。
 
 根据[官方手册](https://base.movella.com/s/article/Synchronization-with-the-MTi)，IMU在接收到StartSampling信号的0.69ms后开始采样，并在接收到StartSampling信号的3.19ms后产生第一个加速度计/陀螺仪数据，在接收到StartSampling信号的1000.69ms后发出第一个SyncOut信号。因此，stm32接收到第一个PPS信号的时间实际上是IMU的第一个数据的1000.69ms - 3.19ms = 997.5ms后。此时stm32向激光雷达发出GPRMC信号并将激光雷达的硬件时间设置为$T_0$ 。因此在激光雷达驱动中：
@@ -53,6 +55,7 @@ $$
 <div align="center">
 <img src="./pics/IMU_hardware1.png"  width="40.0%" />
 </div>
+
 <div align="center">
 <img src="./pics/IMU_hardware.png"  width="80.0%" />
 </div>
@@ -61,6 +64,7 @@ $$
 <div align="center">
 <img src="./pics/Lidar_hardware1.png"  width="40.0%" />
 </div>
+
 <div align="center">
 <img src="./pics/Lidar_hardware.png"  width="40.0%" />
 </div>
@@ -74,6 +78,7 @@ $$
 <div align="center">
 <img src="./pics/stm32.png"  width="80.0%" />
 </div>
+
 <div align="center">
 <img src="./pics/sync_board.png"  width="100.0%" />
 </div>
@@ -90,6 +95,7 @@ $$
 <div align="center">
 <img src="./pics/pcb.png"  width="100.0%" />
 </div>
+
 | 零件  | 图片  | 数量  |
 | :------------: | :------------: | :------------: |
 |SH1.0-2P|<img src="./pics/sh2p.png" width=20%  />| 1 |
@@ -122,6 +128,7 @@ $$
 <div align="center">
 <img src="./pics/Camera_hardware.png"  width="80.0%" />
 </div>
+
 | Hikvision相机触发线插头 | SH1.0-2P插头 |
 | :------------: | :------------: |
 | GND | Pin1 |
@@ -135,11 +142,13 @@ SH1.0-6P端子线10cm
 <div align="center">
 <img src="./pics/handhold_real.jpeg"  width="50.0%" />
 </div>
+
 <div align="center">
 <img src="./pics/handhold1.png"  width="80.0%" />
 </div>
 
 Lidar -> IMU Translation
+
 $$
 \left[
  \begin{matrix}
@@ -178,20 +187,24 @@ $$
 <div align="center">
 <img src="./pics/IMU_settings1.png"  width="80.0%" />
 </div>
+
 需要在IMU驱动中打开Sample Time Fine与Sample Time Coarse。
 <div align="center">
 <img src="./pics/IMU_settings2.png"  width="80.0%" />
 </div>
+
 在Syncronization中添加Start Sampling功能，并设置为上升沿触发。
 <div align="center">
 <img src="./pics/IMU_settings3.png"  width="80.0%" />
 </div>
+
 在Syncronization中添加Sync Out功能，并设置Skip Factor为399，脉宽为100000us。
 
 #### 激光雷达设置
 <div align="center">
 <img src="./pics/Lidar_settings1.png"  width="80.0%" />
 </div>
+
 在Robosense的网页驱动中打开Pulse Trigger Switch，并设置开始角度为342°，脉宽为10000000ns。
 #### 相机设置
 
